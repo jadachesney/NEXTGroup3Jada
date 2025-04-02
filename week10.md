@@ -39,12 +39,23 @@ Cookies only clear after 30 minutes, but we wanted them to fully delete on log o
 ## Wednesday 26/03/2025
 
 ### During Session
-
-- called arian the entire day trying to fix our blazor auth
-- wrote sql query for lianas encouraging messages
+- Me and Arian joined a Google Meeting at 10am and I explained the situation with the authentication and authorization and gave a brief overview of why I thought it was happening. We started off by fixing the previous issue with the cookies I mentioned. This was an issue because of the cookie builder being ran twice for a Candidate and Staff. So, first off, we changed it so the builder service set to a DEFAULT which would apply to all users. 
+- After this, Arian showed me how to use the Identity service which was actually built into Blazor. He explained that the issue we were having was due to a few things:
+    - We were hashing and salting the passwords ourselves with a function me and Jasmine made for Staff and Candidate. With the built in Blazor/Microsoft/Asp.Net Auth, if you build the tables properly within the database and install the correct package, you don't need to do this. This is partly why once logged in, even though the passwords were getting checked, the view authorisation still wasn't working.
+    - We hadn't installed the correct package for Microsoft.AspNet.Identity in our library.
+    - We hadn't done a database migration for the AspNet tables to be made in our database, therefore it wasn't using any of the verification from there even though we had written the code where it required that. But we didn't know as when me and Jasmine did the password auth it wasn't mentioned in the tutorials we were following.
+- After adding Identity services, I rebuilt the structure of the builder services for cookies as well as the app.UseAuthentication and functions such as that. Arian said that the issue might occur due to the format in which they are ran in the program.cs so those were changed and fixed to be in the correct format.
+- Next, we went into the actual files where the candidate registers and login. Liana swapped out with me for an hour as she knew more about migrations than I did, and I felt more comfortable if she did that bit due to not wanting to lose data if I misdid a migration. So, Arian told us to run new migrations, and the database updated with the correct AspNet tables that allowed for the prebuilt hash function, and things for a UserManager in order for us to manage the users that register and how their login is handled. 
+- I followed this on each page to add the Authorize View, which was sent by Arian to explain it better to me: https://stackoverflow.com/questions/75946661/blazor-server-authorization-to-access-page
+- Then I started redoing the authentication code for register and login pages so that it worked with the new database tables and the LoginModel created by Liana. I used the UserManager function to get respective roles (candidate/staff). Then, Arian showed about the claims. Me and Jasmine had previously had Claims in the code, but it wasn't fetching for the specific user. I created a new list of claims specific to the candidate login input, which then ran through the Identity and would only log the user in if true. (proof_and_screenshots\claims.png)
+- I created the register model code very similar, except it didn't use claims since it was adding a Candidate. For this, I changed the AddCandidate() function to register a new user using the NextUser model which inherits IdentityUser. In the NextUser model I added FirstName and LastName so when a candidate registers they have to enter that, and the IdentityUser defaults to needing things such as Email, UserName, etc. (proof_and_screenshots\register.png)
+- After sorting out everything with Arian and him explaining the main bits that were causing the issue, he left me to finish the rest by myself as I had a pretty solid understanding of what was happening and how to fix it. I went through each of the LoginPages (CandidateLogin, Logout, Register, StaffLogin) and fixed the html so the new values were binded to those required of the IdentityUser. 
+- Once I fixed the code on all the LoginPages, I wrote and queryed in some results for the encouraging messages. Liana created the table and me and her spoke about the frequency of the messages. We ran a few test examples and did some math for this, which she then wrote in the code. (proof_and_screenshots\encouragingmath.png)
 
 ### To Do
-Completed all for this session
+Fix up all CRUD pages to match new Authentication and make sure the Authorisation of viewing for certain users works on every page.
+Create a Cookie agreement so the user can only proceed with the quiz if they accept our terms.
+Clean up/delete default Blazor pages
 
 ### Issues
 No conflicts this session
@@ -52,23 +63,38 @@ No conflicts this session
 ## Thursday 27/03/2025
 
 ### During Session
-- cookie agreement
+- After yesterday, me and Liana decided to work on the CRUD pages together for the rest of the sprint. We both made a list of all CRUD pages that needed to be changed to have authorisation (proof_and_screenshots\thursdaytasks.png). In the blue writing is what had been completed thus far, and the bottom left where it says Staff, Candidate, Admin, is what needed to be done. We split this up and worked together just to get it completed. 
+- I encountered a bug when trying to run the pages after adding Authorisation to the html where it encapsulated an EditForm function, (proof_and_screenshots\thursdaybug.png). After some research, Stackoverflow and Reddit suggested this fix: https://stackoverflow.com/questions/77385602/component-editform-uses-the-same-parameter-name-context-as-enclosing-child
+    - To my understanding, it was due to having multiple context's for the AuthorizeView, as I didn't set a certain name for the context. Though, at first, I thought it was an issue with the EditForm context. As you can see in the screenshot attached, I tried adding a EditContext variable, but was still encountering the error. I emailed Arian as the error still wasn't resolved, but by the time he had replied I had figured it out that it was the context for the AuthorizeView I needed. I resolved this by setting the Context to a "authContext" variable and then went onto every page that had an EditForm inside the AuthorizeView and changed their context to that as well (proof_and_screenshots\error-resolved.png).
+- I completed (alongside Liana) all the Candidate, Staff, and Admin CRUD. This included changing links, setting the roles for the view, and some other pages such as the Index, Results, and Details page for the respective user. After this, I started on adding Cookie Authorisation to the landing page.
+- For the cookie authorisation, it was very straight forwards. I created a popup in the Home page, where the user can ONLY proceed to the landing page/quiz if they accept the terms. This is due to following the briefs requirements, where user data will be taken from their results in order for staff to analyse which roles and departments are recommended more to users. The way I set up the cookies the previous day actually sets the cookie after the user starts the quiz, so I didn't need to add anything that creates the cookie after the user clicks Agree on the popup. For the text provided in the Cookie Banner, I researched on GDPR and on the UK Government website to see what information was mandatory to show to a user when taking their cookies. I followed the required information, and also added a link which redirects the user to the NEXT Careers PDF on their cookie usage and agreement if they want further information. (proof_and_screenshots\cookie.png) Liana found the cookie icon on Google icons which I added to the css, and then she helped me with a CSS issue I was having. I wrote it so that on initial load, the cookie banner is shown and the background opacity is lowered. Then, when a user accepts, the banner should be hidden and background at full opacity. It was throwing an issue where it would stay shown after click, so Liana helped me out with this and we decided the easiest way to go about it was writing two lines of code for it instead of doing an inline one line. This worked well, except added an extra class to the CSS but we didn't mind as it worked well. Liana made a cookieService which we added to the Cookie Popup code, so that if the user consented, the state was set to true and it wouldn't reappear every time they reloaded the site. 
+
 
 ### To Do
-Completed all for this session
+Fully clean up Dashboard Pages (with the new CRUD)
+Go through and decide which pages are needed
+Merge all to dev
 
 ### Issues
-No conflicts this session
+We had some issues with the amount of work being completed on time. This was particularly an issue due to me and Liana having spent the entire day practically reworking all the CRUD pages, and despite our work, there were still tasks not completed on time by another teammate that pushed back the schedule. The charts that connected the result data to the dashboard were started on Monday and needed to be completed by this morning so that we wouldn't fall further behind schedule. However, this teammate still didn't complete it and refused to ask for help or communicate their struggles with the rest of the team.
 
 ## Friday 28/03/2025
 
 ### During Session
-- crud pages for staff and candidate
-- light house testing
+- The session started off by visualising which pages we needed, and which we could delete, alongside which were fully functioning (for CRUD). We ended up deciding on the pages written on the board as which a user would need (proof_and_screenshots\fridaytask.png). 
+- I started working on the Candidate functions in the Delete and Edit page. I figured this would be the best way to go about it, as the pages the day before had been fixed with authorisation, but some code still needed to be changed to reflect the new models added. I told Liana it would probably be best if I did the Candidate Edit and Delete, and then she could replicate that code but for Staff/Admin. This was mainly due to me being a bit more familiar with the authentication/authorization as I had done the majority of that with Arian and had a good understanding of it.
+- I encountered an error when trying to delete a Candidate (proof_and_screenshots\deletecandidate.png). After looking through some sources, such as https://stackoverflow.com/questions/77812187/asp-net-identity-library-delete-user-does-not-delete-their-claims, and https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimsidentity.removeclaim?view=net-8.0, I figured out that my issue was occuring because I wasn't calling the LoginModel correctly. To fix this, I did a getter and setter for the LoginModel, like I had done before, but this time set it to a new();, as well as removed the Claim properly before calling the DeleteAsync, so that the user is completely wiped from our records. This was done for privacy issues as we shouldn't hold user data if a user chooses to delete their account and no longer wishes for us to hold their personal data.
+- I then did the Edit page. This required making a new model as we couldn't fetch the information to update it with the Login Model. Liana suggested making a Edit Model, and then I put in the same information that is used in the Login Model, but this time added CurrentPassword. This way, it updates the password and hashes it. The issue we were having and why we chose to create and Edit Model was because all the other information, such as email, was getting updated, but since the password was hashed it wasn't updating it. So it would just revert to the initial set of the password entered. By creating this model, it also helped for overwriting and setting the new information, so that login still worked even with updated information.
+- After this, all functions we had needed to fix was completed. I helped Liana out a bit by explaining how it worked for Candidate so she could implement it for the staff pages like said before. The only issue we encountered with this was for deleting a staff member as it ran a check through the Id (their staff number) as well. We resolved this by setting it for admin view only, and then eliminating the need for their staff number to be checked against and just used their user Id instead. 
+- Then, me and Liana did lighthouse testing, as well as researched what needed to be put in our testing plan. We did a rough draft of things that needed to be spoken about in the testing plan, as we were waiting on another teammate to still finish up the charts before we could start merging everything to dev. We ran a lighthouse report on all pages, documented down what needed to be improved, and put it in the document so the members who were meant to do the testing could use what we had already. (proof_and_screenshots\lighthouse.png)
+
 
 ### To Do
-Completed all for this session
+Merge to dev, test it
+Do the presentation
+Record the software
+Present on Monday to client
 
 ### Issues
-No conflicts this session
+The main issue we encountered again was the issue with the teammate not completing their work on time. We had originally planned to get everything done at 2pm, then to push to dev, solve conflicts, and do the presentation. Due to another teammate still working on the charts from Monday, we couldn't do this and had to wait on his work to be completed. I said I would do the presentation over the weekend, and I would solve the merge conflicts as a lot of the code being pushed had been done in mine and Lianas Login-system branch. Therefore I knew what needed to be kept, and I communicated this to the member who hadn't completed the work on time that they would just have to resolve their own merge conflicts from the charts. This is expanded on in my reflection, due to some stuff happening over the weekend that isnt included in the sprint.
 
